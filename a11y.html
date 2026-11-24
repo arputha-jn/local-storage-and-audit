@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Accessible Tabs Demo</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      color: #111111; /* High contrast text (#111 on #fff = 18.8:1 ratio) */
+      background-color: #ffffff;
+    }
+
+    [role="tablist"] {
+      display: flex;
+      border-bottom: 2px solid #333333;
+      gap: 4px;
+    }
+
+    [role="tab"] {
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #f0f0f0;
+      color: #111111;
+      border: 2px solid transparent;
+      border-bottom: none;
+      cursor: pointer;
+    }
+
+    [role="tab"][aria-selected="true"] {
+      background: #0044cc; /* High contrast blue (#fff on #0044cc = 8.6:1 ratio) */
+      color: #ffffff;
+    }
+
+    /* Clear visible focus indicator for keyboard users */
+    [role="tab"]:focus-visible, button:focus-visible {
+      outline: 3px solid #ff9900;
+      outline-offset: 2px;
+    }
+
+    [role="tabpanel"] {
+      padding: 1.5rem;
+      border: 2px solid #333333;
+      border-top: none;
+    }
+
+    [role="tabpanel"][hidden] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <h1 id="tabs-heading">Project Documentation</h1>
+
+    <!-- ARIA Tablist with accessible label -->
+    <div role="tablist" aria-labelledby="tabs-heading">
+      <button role="tab" aria-selected="true" aria-controls="panel-1" id="tab-1" tabindex="0">
+        Overview
+      </button>
+      <button role="tab" aria-selected="false" aria-controls="panel-2" id="tab-2" tabindex="-1">
+        Installation
+      </button>
+      <button role="tab" aria-selected="false" aria-controls="panel-3" id="tab-3" tabindex="-1">
+        API Reference
+      </button>
+    </div>
+
+    <!-- Corresponding Tabpanels -->
+    <div id="panel-1" role="tabpanel" tabindex="0" aria-labelledby="tab-1">
+      <h2>Overview</h2>
+      <p>Use Left and Right arrow keys to switch between tabs cleanly.</p>
+      <button aria-label="Download full documentation PDF">Download PDF</button>
+    </div>
+
+    <div id="panel-2" role="tabpanel" tabindex="0" aria-labelledby="tab-2" hidden>
+      <h2>Installation</h2>
+      <p>Run <code>npm install package-name</code> in your terminal.</p>
+    </div>
+
+    <div id="panel-3" role="tabpanel" tabindex="0" aria-labelledby="tab-3" hidden>
+      <h2>API Reference</h2>
+      <p>All endpoints require a valid Bearer token in the header.</p>
+    </div>
+  </main>
+
+  <script>
+    const tabList = document.querySelector('[role="tablist"]');
+    const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    function activateTab(newTab) {
+      // Reset all tabs and hide all panels
+      tabs.forEach(tab => {
+        tab.setAttribute('aria-selected', 'false');
+        tab.setAttribute('tabindex', '-1');
+      });
+      panels.forEach(panel => panel.setAttribute('hidden', 'true'));
+
+      // Activate the target tab and show its panel
+      newTab.setAttribute('aria-selected', 'true');
+      newTab.setAttribute('tabindex', '0');
+      newTab.focus();
+
+      const targetPanelId = newTab.getAttribute('aria-controls');
+      document.getElementById(targetPanelId).removeAttribute('hidden');
+    }
+
+    // Click support
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => activateTab(tab));
+    });
+
+    // Keyboard navigation support (Left/Right Arrows, Home, End)
+    tabList.addEventListener('keydown', (e) => {
+      const currentIndex = tabs.indexOf(document.activeElement);
+      if (currentIndex === -1) return;
+
+      let nextIndex = null;
+      if (e.key === 'ArrowRight') {
+        nextIndex = (currentIndex + 1) % tabs.length;
+      } else if (e.key === 'ArrowLeft') {
+        nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      } else if (e.key === 'Home') {
+        nextIndex = 0;
+      } else if (e.key === 'End') {
+        nextIndex = tabs.length - 1;
+      }
+
+      if (nextIndex !== null) {
+        e.preventDefault();
+        activateTab(tabs[nextIndex]);
+      }
+    });
+  </script>
+</body>
+</html>

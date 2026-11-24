@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>State Persistence Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    .controls { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+    input, select { padding: 8px; font-size: 1rem; }
+    .item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ccc; margin-bottom: 8px; border-radius: 4px; }
+    .bookmarked { background-color: #fff8dc; border-color: #e6c200; }
+  </style>
+</head>
+<body>
+
+  <h2>Resource Directory</h2>
+
+  <div class="controls">
+    <!-- Input persisted via sessionStorage -->
+    <input type="text" id="searchInput" placeholder="Search items..." />
+
+    <!-- Filter persisted via localStorage -->
+    <select id="categoryFilter">
+      <option value="all">All Categories</option>
+      <option value="frontend">Frontend</option>
+      <option value="backend">Backend</option>
+    </select>
+  </div>
+
+  <div id="itemList"></div>
+
+  <script>
+    const items = [
+      { id: 1, name: 'CSS Grid Guide', category: 'frontend' },
+      { id: 2, name: 'Node.js Streams', category: 'backend' },
+      { id: 3, name: 'ARIA Patterns', category: 'frontend' },
+      { id: 4, name: 'PostgreSQL Indexing', category: 'backend' }
+    ];
+
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const itemList = document.getElementById('itemList');
+
+    // 1. Load saved state on page load
+    let bookmarks = JSON.parse(localStorage.getItem('userBookmarks')) || [];
+    categoryFilter.value = localStorage.getItem('selectedCategory') || 'all';
+    searchInput.value = sessionStorage.getItem('searchQuery') || '';
+
+    function toggleBookmark(id) {
+      if (bookmarks.includes(id)) {
+        bookmarks = bookmarks.filter(item => item !== id);
+      } else {
+        bookmarks.push(id);
+      }
+      // Save updated array to localStorage as a JSON string
+      localStorage.setItem('userBookmarks', JSON.stringify(bookmarks));
+      renderItems();
+    }
+
+    function renderItems() {
+      const query = searchInput.value.toLowerCase();
+      const category = categoryFilter.value;
+
+      const filtered = items.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(query);
+        const matchesCategory = category === 'all' || item.category === category;
+        return matchesSearch && matchesCategory;
+      });
+
+      itemList.innerHTML = filtered.map(item => {
+        const isBookmarked = bookmarks.includes(item.id);
+        return `
+          <div class="item ${isBookmarked ? 'bookmarked' : ''}">
+            <span><strong>${item.name}</strong> (${item.category})</span>
+            <button onclick="toggleBookmark(${item.id})">
+              ${isBookmarked ? '★ Bookmarked' : '☆ Bookmark'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 2. Listen for changes and update storage
+    searchInput.addEventListener('input', (e) => {
+      sessionStorage.setItem('searchQuery', e.target.value);
+      renderItems();
+    });
+
+    categoryFilter.addEventListener('change', (e) => {
+      localStorage.setItem('selectedCategory', e.target.value);
+      renderItems();
+    });
+
+    // Initial render
+    renderItems();
+  </script>
+</body>
+</html>
